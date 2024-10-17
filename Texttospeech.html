@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text to Speech App</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 min-h-screen p-8">
+    <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6">
+        <h1 class="text-3xl font-bold mb-6 text-center text-gray-800">Text to Speech</h1>
+        
+        <div class="mb-4">
+            <textarea 
+                id="textInput" 
+                class="w-full p-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                rows="6" 
+                placeholder="Enter text to convert to speech..."
+            ></textarea>
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-gray-700 mb-2">Voice:</label>
+            <select 
+                id="voiceSelect" 
+                class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+            >
+                <option value="">Loading voices...</option>
+            </select>
+        </div>
+
+        <div class="flex gap-4 mb-4">
+            <div class="flex-1">
+                <label class="block text-gray-700 mb-2">Rate:</label>
+                <input 
+                    type="range" 
+                    id="rate" 
+                    min="0.1" 
+                    max="2" 
+                    value="1" 
+                    step="0.1"
+                    class="w-full"
+                >
+                <span id="rateValue" class="text-sm text-gray-600">1</span>
+            </div>
+
+            <div class="flex-1">
+                <label class="block text-gray-700 mb-2">Pitch:</label>
+                <input 
+                    type="range" 
+                    id="pitch" 
+                    min="0.1" 
+                    max="2" 
+                    value="1" 
+                    step="0.1"
+                    class="w-full"
+                >
+                <span id="pitchValue" class="text-sm text-gray-600">1</span>
+            </div>
+        </div>
+
+        <div class="flex gap-4">
+            <button 
+                id="speakButton"
+                class="flex-1 bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            >
+                Speak
+            </button>
+            <button 
+                id="pauseButton"
+                class="flex-1 bg-yellow-500 text-white px-6 py-2 rounded-lg hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+            >
+                Pause
+            </button>
+            <button 
+                id="stopButton"
+                class="flex-1 bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400"
+            >
+                Stop
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let speechSynthesis = window.speechSynthesis;
+        let utterance = null;
+
+        // Elements
+        const textInput = document.getElementById('textInput');
+        const voiceSelect = document.getElementById('voiceSelect');
+        const rateInput = document.getElementById('rate');
+        const pitchInput = document.getElementById('pitch');
+        const rateValue = document.getElementById('rateValue');
+        const pitchValue = document.getElementById('pitchValue');
+        const speakButton = document.getElementById('speakButton');
+        const pauseButton = document.getElementById('pauseButton');
+        const stopButton = document.getElementById('stopButton');
+
+        // Load voices
+        function loadVoices() {
+            const voices = speechSynthesis.getVoices();
+            voiceSelect.innerHTML = voices
+                .map(voice => `<option value="${voice.name}">${voice.name} (${voice.lang})</option>`)
+                .join('');
+        }
+
+        // Voice changed event
+        speechSynthesis.onvoiceschanged = loadVoices;
+
+        // Update rate and pitch values
+        rateInput.addEventListener('input', (e) => {
+            rateValue.textContent = e.target.value;
+        });
+
+        pitchInput.addEventListener('input', (e) => {
+            pitchValue.textContent = e.target.value;
+        });
+
+        // Speak function
+        speakButton.addEventListener('click', () => {
+            // Stop any ongoing speech
+            speechSynthesis.cancel();
+
+            // Get the text
+            const text = textInput.value;
+            if (!text) return;
+
+            // Create new utterance
+            utterance = new SpeechSynthesisUtterance(text);
+
+            // Set properties
+            const voices = speechSynthesis.getVoices();
+            utterance.voice = voices.find(voice => voice.name === voiceSelect.value);
+            utterance.rate = parseFloat(rateInput.value);
+            utterance.pitch = parseFloat(pitchInput.value);
+
+            // Speak
+            speechSynthesis.speak(utterance);
+        });
+
+        // Pause button
+        pauseButton.addEventListener('click', () => {
+            if (speechSynthesis.speaking) {
+                if (speechSynthesis.paused) {
+                    speechSynthesis.resume();
+                } else {
+                    speechSynthesis.pause();
+                }
+            }
+        });
+
+        // Stop button
+        stopButton.addEventListener('click', () => {
+            speechSynthesis.cancel();
+        });
+    </script>
+</body>
+</html>
